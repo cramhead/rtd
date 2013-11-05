@@ -46,7 +46,9 @@ module.exports = function(config){
             'app/.meteor/local',
             'app/server/fixture.js',
             'app/server/fixture.coffee',
-            'app/packages/**/*'
+            'app/packages/**/*',
+            'app/public/js/**'
+
         ],
 
         preprocessors : {
