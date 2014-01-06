@@ -25,18 +25,24 @@
         tasks.push('bgShell:startApp');
         tasks.push('pollServices');
         tasks.push('outputPorts');
+        tasks.push('watch');
         return tasks;
     };
 
-    var constructWatchTasks = function () {
+    var constructWatchTasks = function (runOnceMode) {
         var tasks = [];
 
-        if (rtdConf.options.jshint && rtdConf.options.jshint.enabled) {
+        if (!runOnceMode && rtdConf.options.jshint && rtdConf.options.jshint.enabled) {
             tasks.push('jshint:app');
             tasks.push('jshint:test');
         }
 
-        tasks.push('bgShell:karmaRun');
+	    if (!runOnceMode && rtdConf.options.coffeelint && rtdConf.options.coffeelint.enabled) {
+		    tasks.push('coffeelint:app');
+		    tasks.push('coffeelint:test');
+	    }
+
+	    tasks.push('bgShell:karmaRun');
         tasks.push('bgShell:synchronizeMirrorApp');
         tasks.push('bgShell:instrumentCode');
 
@@ -55,6 +61,18 @@
         }
         return tasks;
     };
+
+    function constructRunOnceTasks(startupTasks) {
+        var tasks = [];
+        tasks.push('jshint:app');
+        tasks.push('jshint:test');
+	    tasks.push('coffeelint:app');
+	    tasks.push('coffeelint:test');
+        tasks = tasks.concat(startupTasks.slice(0, startupTasks.length - 1));
+        tasks.push.apply(tasks, constructWatchTasks(true));
+        tasks.push('closeWebdriverSessions');
+        return tasks;
+    }
 
     function getLatestCoverageObject() {
         var coverageDir = PROJECT_BASE_PATH + '/build/reports/coverage';
@@ -211,11 +229,7 @@
             instrumentationExcludes = getInstrumentedCodeString(rtdConf.options.instrumentationExcludes),
             startupTasks = constructStartupTasks(),
             watchTasks = constructWatchTasks(),
-            runOnceTasks = startupTasks.slice(0);
-
-        startupTasks.push('watch');
-        runOnceTasks.push.apply(runOnceTasks, constructWatchTasks());
-        runOnceTasks.push('closeWebdriverSessions');
+            runOnceTasks = constructRunOnceTasks(startupTasks);
 
         if (!debug) {
             grunt.log.ok = function () {
@@ -352,26 +366,37 @@
             },
             'unzip': {
                 chromeDriver: {
-                    src: '<%= basePath %>/test/rtd/lib/bin/<%= chromeDriverName %>_<%= chromeDriverOs %>_<%= chromeDriverVersion %>.zip',
+                    src: '<%= basePath %>/test/rtd/lib/bin/<%= chromeDriverName %>_<%= chromeDriverOs %>.zip',
                     dest: '<%= basePath %>/test/rtd/lib/bin/'
                 }
             },
             'jshint': {
                 app: {
                     options: rtdConf.options.jshint && rtdConf.options.jshint.appOptions ? rtdConf.options.jshint.appOptions : {},
-                    src: ['<%= basePath %>/app/**/*.js', '!<%= basePath %>/app/.meteor/**/*.js']
+                    src: ['<%= basePath %>/app/**/*.js', '!<%= basePath %>/app/.meteor/**/*.js', '!<%= basePath %>/app/packages/**/*.js']
                 },
                 test: {
                     options: rtdConf.options.jshint && rtdConf.options.jshint.testOptions ? rtdConf.options.jshint.testOptions : {},
-                    src: ['<%= basePath %>/test/**/*.js', '!<%= basePath %>/test/rtd/**/*.js']
+                    src: ['<%= basePath %>/test/**/*.js', '!<%= basePath %>/test/rtd/**/*.js', '!<%= basePath %>/test/rtd.conf.js', '!<%= basePath %>/test/karma.conf.js']
                 }
             },
+	        'coffeelint': {
+		        app: {
+			        options: rtdConf.options.coffeelint && rtdConf.options.coffeelint.appOptions ? rtdConf.options.coffeelint.appOptions : {},
+			        src: ['<%= basePath %>/app/**/*.coffee', '!<%= basePath %>/app/.meteor/**/*.coffee', '!<%= basePath %>/app/packages/**/*.coffee']
+		        },
+		        test: {
+			        options: rtdConf.options.coffeelint && rtdConf.options.coffeelint.testOptions ? rtdConf.options.coffeelint.testOptions : {},
+			        src: ['<%= basePath %>/test/**/*.coffee', '!<%= basePath %>/test/rtd/**/*.coffee']
+		        }
+	        },
             cucumberjs: rtdConf.options.cucumberjs ? rtdConf.options.cucumberjs : {}
         });
         grunt.loadNpmTasks('grunt-bg-shell');
         grunt.loadNpmTasks('grunt-contrib-watch');
         grunt.loadNpmTasks('grunt-zip');
         grunt.loadNpmTasks('grunt-contrib-jshint');
+	    grunt.loadNpmTasks('grunt-coffeelint');
         grunt.loadNpmTasks('grunt-cucumber');
 
         grunt.registerTask('chmod', 'chmod', function () {

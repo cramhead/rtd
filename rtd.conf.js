@@ -38,6 +38,12 @@ module.exports = {
             appOptions: {},
             testOptions: {}
         },
+	    coffeelint: {
+		    enabled: true,
+		    // if you want to customize coffeelint options for app and/or test code, you can do that here
+			appOptions: {},
+	        testOptions: {}
+	    },
         // if you have client libraries, you'll want to exclude them from test coverage
         instrumentationExcludes: ['**/packages/**', '**/3rd/**', 'fixture.js', 'fixture.coffee'],
         // If your dev environment has a stand-alone mongo service, you should disabled this
@@ -46,10 +52,10 @@ module.exports = {
     selenium: {
         // You can set specific versions of selenium-server / chromedriver to use here
         darwin: {
-            chromeDriverName: 'chromedriver2',
+            chromeDriverName: 'chromedriver',
             chromeDriverOs: 'mac32',
-            chromeDriverVersion: '0.8',
-            chromeDriverSha: '5a485bb73a7e85a063cffaab9314837a00b98673'
+            chromeDriverVersion: '2.6',
+            chromeDriverSha: '4643652d403961dd9a9a1980eb1a06bf8b6e9bad'
         },
         linux: {
             chromeDriverName: 'chromedriver',
